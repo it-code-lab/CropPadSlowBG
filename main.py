@@ -78,7 +78,7 @@ def process_video(
 
         filter_str = (
             f"[0:v]{base_filter}[v1];"
-            f"[1:v]scale=iw*{watermark_scale}:-1[wm];"
+            f"[1:v]scale=-1:'if(gt(ih*{watermark_scale},80),80,ih*{watermark_scale})'[wm];"
             f"[v1][wm]overlay={pos}[outv]"
         )
 
