@@ -1,6 +1,7 @@
 import os
 import subprocess
 import random
+import shutil
 
 def get_random_music(bg_music_folder):
     music_files = [
@@ -11,7 +12,7 @@ def get_random_music(bg_music_folder):
     return random.choice(music_files) if music_files else None
 
 def process_video(input_path, output_path, crop_top_pixels, bg_music_path):
-    # Get original video size
+    # Get original video resolution
     probe_cmd = [
         'ffprobe', '-v', 'error',
         '-select_streams', 'v:0',
@@ -21,7 +22,6 @@ def process_video(input_path, output_path, crop_top_pixels, bg_music_path):
     result = subprocess.run(probe_cmd, capture_output=True, text=True)
     width, height = map(int, result.stdout.strip().split('x'))
 
-    # Calculate crop + pad
     cropped_height = height - crop_top_pixels
     pad_top = (height - cropped_height) // 2
 
@@ -31,7 +31,6 @@ def process_video(input_path, output_path, crop_top_pixels, bg_music_path):
         f"setpts=2.0*PTS"
     )
 
-    # Final FFmpeg command
     ffmpeg_cmd = [
         'ffmpeg', '-y',
         '-i', input_path,
@@ -49,9 +48,20 @@ def process_video(input_path, output_path, crop_top_pixels, bg_music_path):
     subprocess.run(ffmpeg_cmd)
     print(f"✅ Processed: {os.path.basename(output_path)}")
 
-def batch_process(input_folder='input', output_folder='output', bg_music_folder='god_bg', crop_top_pixels=50):
-    os.makedirs(output_folder, exist_ok=True)
+def clear_folder(folder_path, extensions=None):
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+    for file in os.listdir(folder_path):
+        full_path = os.path.join(folder_path, file)
+        if os.path.isfile(full_path):
+            if not extensions or file.lower().endswith(extensions):
+                os.remove(full_path)
 
+def batch_process(input_folder='input', output_folder='output', bg_music_folder='god_bg', crop_top_pixels=50):
+    # Clear output folder before processing
+    clear_folder(output_folder)
+
+    # Process videos
     for filename in os.listdir(input_folder):
         if filename.lower().endswith(".mp4"):
             input_path = os.path.join(input_folder, filename)
@@ -60,9 +70,10 @@ def batch_process(input_folder='input', output_folder='output', bg_music_folder=
 
             if bg_music:
                 process_video(input_path, output_path, crop_top_pixels, bg_music)
+                os.remove(input_path)  # delete input file after processing
             else:
                 print("❌ No background music found in god_bg folder.")
                 break
 
-# 🔁 Run it
+# Run the batch processor
 batch_process()
