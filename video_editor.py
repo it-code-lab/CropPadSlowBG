@@ -166,7 +166,7 @@ batch_process(
     input_folder="input",
     output_folder="output",
     bg_music_folder="god_bg",
-    remove_top=0,
+    remove_top=50,
     remove_bottom=0,
     add_music=False,
     slow_down=True,
